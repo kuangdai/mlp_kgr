@@ -3,13 +3,26 @@ import torch.nn as nn
 
 
 class KGRModule(nn.Module):
-    def __init__(self, module, momentum=None, zscore=0.0, perturbation=0.2,
+    def __init__(self, module, momentum=None, zscore=0.0, perturbation=0.2, knot_in_activation=0.0,
                  is_module_affine=True, is_input_skewed=True, disabled=False):
+        """
+        Add Knot-gathering regularization (KGR) to a module
+
+        :param module: the target module
+        :param momentum: momentum to update "center" and "width" of input distribution
+        :param zscore: sample the knot from [center - zscore * width, center + zscore * width]
+        :param perturbation: factor to perturb the KGR-induced bias
+        :param knot_in_activation: location of knot in the activation function
+        :param is_module_affine: whether `module`(a + b) == `module`(a) + `module`(b)
+        :param is_input_skewed: whether the input distribution is skewed (e.g., when the preceding activation if ReLU)
+        :param disabled: disable KGR
+        """
         super().__init__()
         self.module = module
         self.momentum = momentum
         self.zscore = zscore
         self.perturbation = perturbation
+        self.knot_in_activation = knot_in_activation
         self.is_module_affine = is_module_affine
         self.is_input_skewed = is_input_skewed
         self.disabled = disabled
@@ -66,6 +79,7 @@ class KGRModule(nn.Module):
         else:
             # Sampling knots deterministically for inference
             knot = self.running_center
+        knot += self.knot_in_activation
 
         if not self.is_module_affine:
             # Determine bias based on knot gathering
@@ -86,4 +100,3 @@ class KGRModule(nn.Module):
             else:
                 out = self.module(x - knot)
         return out
-    
