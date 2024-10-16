@@ -86,31 +86,4 @@ class KGRModule(nn.Module):
             else:
                 out = self.module(x - knot)
         return out
-
-
-if __name__=="__main__":
-    import numpy as np
-    from scipy.stats import norm
-
-    # Parameters for the normal distribution
-    mu = 10  # mean
-    sigma = 1  # standard deviation
-
-    # Generate a large sample from N(mu, sigma)
-    sample_size = 100000  # large sample size for accurate results
-    samples = np.random.normal(loc=mu, scale=sigma, size=sample_size)
-
-    # Compute the empirical median
-    empirical_median = np.median(samples)
-
-    # Compute the Median Absolute Deviation (MAD)
-    absolute_deviation = np.abs(samples - empirical_median)
-    empirical_mad = np.median(absolute_deviation)
-
-    # Theoretical MAD for a normal distribution: MAD = 0.6745 * sigma
-    theoretical_mad = 0.6745 * sigma
-
-    # Output results
-    print(f"Empirical Median: {empirical_median}")
-    print(f"Empirical MAD: {empirical_mad}")
-    print(f"Theoretical MAD (0.6745 * sigma): {theoretical_mad}")
+    
