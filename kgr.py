@@ -35,14 +35,13 @@ class KGRModule(nn.Module):
 
         if self.training:
             if self.is_input_skewed:
-                # Use median and MAD if input is skewed
+                # Use median and MAD if input is skewed, scale MAD to be on the same scale as std
                 batch_center = torch.median(x, dim=0).values.detach()
-                batch_width = torch.median(torch.abs(x - batch_center),
-                                           dim=0).values.detach()  # Median Absolute Deviation
+                batch_width = torch.median(torch.abs(x - batch_center), dim=0).values.detach() / 0.6745
             else:
                 # Use mean and standard deviation if input is not skewed
                 batch_center = torch.mean(x, dim=0).detach()
-                batch_width = torch.std(x, dim=0).detach()  # Standard Deviation
+                batch_width = torch.std(x, dim=0).detach()
 
             # Update the batch count
             batch_size = x.size(0)  # Number of samples in the current batch
@@ -87,3 +86,31 @@ class KGRModule(nn.Module):
             else:
                 out = self.module(x - knot)
         return out
+
+
+if __name__=="__main__":
+    import numpy as np
+    from scipy.stats import norm
+
+    # Parameters for the normal distribution
+    mu = 10  # mean
+    sigma = 1  # standard deviation
+
+    # Generate a large sample from N(mu, sigma)
+    sample_size = 100000  # large sample size for accurate results
+    samples = np.random.normal(loc=mu, scale=sigma, size=sample_size)
+
+    # Compute the empirical median
+    empirical_median = np.median(samples)
+
+    # Compute the Median Absolute Deviation (MAD)
+    absolute_deviation = np.abs(samples - empirical_median)
+    empirical_mad = np.median(absolute_deviation)
+
+    # Theoretical MAD for a normal distribution: MAD = 0.6745 * sigma
+    theoretical_mad = 0.6745 * sigma
+
+    # Output results
+    print(f"Empirical Median: {empirical_median}")
+    print(f"Empirical MAD: {empirical_mad}")
+    print(f"Theoretical MAD (0.6745 * sigma): {theoretical_mad}")
